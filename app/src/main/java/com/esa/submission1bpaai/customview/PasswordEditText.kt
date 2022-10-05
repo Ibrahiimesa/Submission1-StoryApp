@@ -6,8 +6,10 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.text.method.PasswordTransformationMethod
 import android.util.AttributeSet
+import android.util.Patterns
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.content.ContextCompat
+import androidx.core.widget.addTextChangedListener
 import com.esa.submission1bpaai.R
 
 class PasswordEditText: AppCompatEditText {
@@ -36,32 +38,21 @@ class PasswordEditText: AppCompatEditText {
         transformationMethod = PasswordTransformationMethod.getInstance()
         onShowVisibilityIcon(lockImage)
 
-        addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-
-            }
-
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                val pass = text?.trim()
-                when {
-                    pass.isNullOrEmpty() -> {
-                        isPassValid = false
-                        error = resources.getString(R.string.input_pass)
-                    }
-                    pass.length < 6 -> {
-                        isPassValid = false
-                        error = resources.getString(R.string.pass_length)
-                    }
-                    else -> {
-                        isPassValid = true
-                    }
+        addTextChangedListener(onTextChanged = {p0: CharSequence?, p1: Int, p2: Int, p3: Int ->
+            val pass = text?.trim()
+            when {
+                pass.isNullOrEmpty() -> {
+                    isPassValid = false
+                    error = resources.getString(R.string.input_pass)
+                }
+                pass.length < 6 -> {
+                    isPassValid = false
+                    error = resources.getString(R.string.pass_length)
+                }
+                else -> {
+                    isPassValid = true
                 }
             }
-
-            override fun afterTextChanged(p0: Editable?) {
-
-            }
-
         })
     }
 
