@@ -1,0 +1,37 @@
+1.UserViewModelTest
+	•Login
+	* Memastikan Login data tidak null.
+	* Memastikan mengembalikan Result.Success.
+	•Register
+	* Memastikan Register data tidak null.
+	* Memastikan mengembalikan Result.Success.
+
+2. MainViewModelTest
+	* Memastikan data story tidak null.
+	* Memastikan jumlah data sesuai dengan yang diharapkan.
+	* Memastikan data story asli dengan data dummy sama.
+
+3. MapsViewModel
+	* Memastikan data story tidak null.
+	* Memastikan mengembalikan Result.Success.
+
+4. AddStoryViewModelTest
+	* Memastikan add story data tidak null.
+	* Memastikan mengembalikan Result.Success.
+
+5. StoryRepositoryImplTest
+	•Register
+	* Memastikan data tidak null.
+	* Memastikan response sesuai dengan yang diharapkan.
+
+	•Login
+	* Memastikan data tidak null.
+	* Memastikan response sesuai dengan yang diharapkan.
+
+	•Story
+	* Memastikan data tidak null.
+	* Memastikan jumlah data sesuai dengan yang diharapkan.
+
+	•Add Story
+	* Memastikan data tidak null.
+	* Memastikan response sesuai dengan yang diharapkan.
