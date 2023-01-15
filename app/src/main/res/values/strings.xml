@@ -24,4 +24,7 @@
     <string name="input_image_first">Input Your Image First!</string>
     <string name="didnt_get_permission">Didn\'t get permission</string>
     <string name="setting">Setting</string>
+    <string name="retry">Retry</string>
+    <string name="maps">Maps Story</string>
+    <string name="story_from">Story from : </string>
 </resources>

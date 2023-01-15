@@ -1,60 +1,18 @@
 package com.esa.submission1bpaai.ui.story
 
-import android.util.Log
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.esa.submission1bpaai.data.Resource
-import com.esa.submission1bpaai.data.network.api.ApiConfig
-import com.esa.submission1bpaai.data.network.response.BaseResponse
-import com.esa.submission1bpaai.data.preference.UserPreferences
-import com.google.gson.Gson
-import kotlinx.coroutines.flow.first
+import com.esa.submission1bpaai.data.model.User
+import com.esa.submission1bpaai.data.repository.StoryRepository
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
-class AddStoryViewModel(private val pref: UserPreferences) : ViewModel() {
 
-    private val _uploadInfo = MutableLiveData<Resource<String>>()
-    val uploadInfo: LiveData<Resource<String>> = _uploadInfo
+class AddStoryViewModel(private val repository: StoryRepository) : ViewModel() {
 
-    suspend fun uploadStory(
-        imageMultipart: MultipartBody.Part,
-        description: RequestBody,
-    ) {
-        _uploadInfo.postValue(Resource.Loading())
-        val client = ApiConfig.getApiClient().addStory(
-            token = "Bearer ${pref.getToken().first()}",
-            imageMultipart,
-            description
-        )
+    fun addStory(token: String, file: MultipartBody.Part, description: RequestBody) = repository.addStory(token, file, description)
 
-        client.enqueue(object : Callback<BaseResponse> {
-            override fun onResponse(
-                call: Call<BaseResponse>,
-                response: Response<BaseResponse>
-            ) {
-                if (response.isSuccessful) {
-                    _uploadInfo.postValue(Resource.Success(response.body()?.message))
-                } else {
-                    val errorResponse = Gson().fromJson(
-                        response.errorBody()?.charStream(),
-                        BaseResponse::class.java
-                    )
-                    _uploadInfo.postValue(Resource.Error(errorResponse.message))
-                }
-            }
-
-            override fun onFailure(call: Call<BaseResponse>, t: Throwable) {
-                Log.e(
-                    AddStoryViewModel::class.java.simpleName,
-                    "onFailure upload"
-                )
-                _uploadInfo.postValue(Resource.Error(t.message))
-            }
-        })
+    fun getUser(): LiveData<User> {
+        return repository.getUserData()
     }
 }

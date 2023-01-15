@@ -1,5 +1,6 @@
 package com.esa.submission1bpaai.ui
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -11,8 +12,11 @@ import android.view.WindowManager
 import androidx.appcompat.app.AppCompatDelegate
 import com.esa.submission1bpaai.ui.story.MainActivity
 import com.esa.submission1bpaai.R
+import com.esa.submission1bpaai.util.durationSplash
 
+@SuppressLint("CustomSplashScreen")
 class SplashScreenActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash_screen)
@@ -39,6 +43,7 @@ class SplashScreenActivity : AppCompatActivity() {
             finish()
             startActivity(intent)
 
-        }, 3000.toLong())
+        }, durationSplash.toLong())
     }
+
 }

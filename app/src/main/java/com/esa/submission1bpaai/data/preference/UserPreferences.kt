@@ -2,8 +2,10 @@ package com.esa.submission1bpaai.data.preference
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.esa.submission1bpaai.data.model.User
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -13,6 +15,10 @@ class UserPreferences private constructor(private val dataStore: DataStore<Prefe
         @Volatile
         private var INSTANCE: UserPreferences? = null
 
+        private val NAME = stringPreferencesKey("name")
+        private val TOKEN = stringPreferencesKey("token")
+        private val STATE = booleanPreferencesKey("state")
+
         fun getInstance(dataStore: DataStore<Preferences>): UserPreferences {
             return INSTANCE ?: synchronized(this) {
                 val instance = UserPreferences(dataStore)
@@ -20,25 +26,35 @@ class UserPreferences private constructor(private val dataStore: DataStore<Prefe
                 instance
             }
         }
-
-        private val TOKEN = stringPreferencesKey("token")
     }
 
-    fun getToken(): Flow<String> {
+    fun getUserData(): Flow<User> {
         return dataStore.data.map { preferences ->
-            preferences[TOKEN] ?: ""
+            User(
+                preferences[NAME] ?: "",
+                preferences[TOKEN] ?: "",
+                preferences[STATE] ?: false
+            )
         }
     }
 
-    suspend fun saveToken(token: String) {
+    suspend fun saveUserData(user: User) {
         dataStore.edit { preferences ->
-            preferences[TOKEN] = token
+            preferences[NAME] = user.name
+            preferences[TOKEN] = user.token
+            preferences[STATE] = user.isLogin
         }
     }
 
-    suspend fun deleteToken() {
+    suspend fun login() {
         dataStore.edit { preferences ->
-            preferences.remove(TOKEN)
+            preferences[STATE] = true
+        }
+    }
+
+    suspend fun logout() {
+        dataStore.edit { preferences ->
+            preferences.clear()
         }
     }
     

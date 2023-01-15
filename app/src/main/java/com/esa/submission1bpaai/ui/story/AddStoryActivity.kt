@@ -1,7 +1,6 @@
 package com.esa.submission1bpaai.ui.story
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
@@ -15,21 +14,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModelProvider
 import com.esa.submission1bpaai.R
 import com.esa.submission1bpaai.util.ViewModelFactory
-import com.esa.submission1bpaai.data.Resource
-import com.esa.submission1bpaai.data.preference.UserPreferences
+import com.esa.submission1bpaai.data.Result
 import com.esa.submission1bpaai.databinding.ActivityAddStoryBinding
 import com.esa.submission1bpaai.util.createCustomTempFile
 import com.esa.submission1bpaai.util.reduceFileImage
 import com.esa.submission1bpaai.util.uriToFile
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -39,7 +31,6 @@ import java.io.File
 
 class AddStoryActivity : AppCompatActivity() {
 
-    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "token")
     private lateinit var binding: ActivityAddStoryBinding
     private lateinit var currentPhotoPath: String
     private lateinit var addStoryViewModel: AddStoryViewModel
@@ -86,51 +77,52 @@ class AddStoryActivity : AppCompatActivity() {
                 REQUEST_CODE_PERMISSIONS
             )
         }
-        setupVm()
+        setupViewModel()
 
         binding.btnCamera.setOnClickListener { startTakePhoto() }
         binding.btnGallery.setOnClickListener { startGallery() }
         binding.btnUpload.setOnClickListener { uploadImage() }
     }
 
-    private fun setupVm() {
-        val pref = UserPreferences.getInstance(dataStore)
-        addStoryViewModel =
-            ViewModelProvider(this, ViewModelFactory(pref))[AddStoryViewModel::class.java]
-
-        addStoryViewModel.uploadInfo.observe(this) {
-            when (it) {
-                is Resource.Success -> {
-                    Toast.makeText(this, it.data, Toast.LENGTH_SHORT).show()
-                    finish()
-                    showLoad(false)
-                }
-                is Resource.Loading -> showLoad(true)
-                is Resource.Error -> {
-                    Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show()
-                    showLoad(false)
-                }
-            }
-        }
+    private fun setupViewModel() {
+        val factory: ViewModelFactory = ViewModelFactory.getInstance(this)
+        addStoryViewModel = ViewModelProvider(this, factory)[AddStoryViewModel::class.java]
     }
 
     private fun uploadImage() {
-        if (getFile != null) {
-            val file = reduceFileImage(getFile as File)
+        addStoryViewModel.getUser().observe(this@AddStoryActivity){
 
-            val description = "${binding.etDesc.text}".toRequestBody("text/plain".toMediaType())
-            val requestImageFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-            val imageMultipart: MultipartBody.Part = MultipartBody.Part.createFormData(
-                "photo",
-                file.name,
-                requestImageFile
-            )
+            val token = "Bearer " +it.token
+            if (getFile != null) {
+                val file = reduceFileImage(getFile as File)
 
-            CoroutineScope(Dispatchers.IO).launch {
-                addStoryViewModel.uploadStory(imageMultipart, description)
+                val description = "${binding.etDesc.text}".toRequestBody("text/plain".toMediaType())
+                val requestImageFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                val imageMultipart: MultipartBody.Part = MultipartBody.Part.createFormData(
+                    "photo",
+                    file.name,
+                    requestImageFile
+                )
+                addStoryViewModel.addStory(token, imageMultipart, description).observe(this@AddStoryActivity){
+                    when(it){
+                        is Result.Success -> {
+
+                            Toast.makeText(this@AddStoryActivity, it.data.message, Toast.LENGTH_SHORT).show()
+                            showLoad(false)
+                            startActivity(Intent(this,MainActivity::class.java))
+                            finish()
+
+                        }
+                        is Result.Loading -> showLoad(true)
+                        is Result.Error ->{
+                            Toast.makeText(this@AddStoryActivity, it.error, Toast.LENGTH_SHORT).show()
+                            showLoad(false)
+                        }
+                    }
+                }
+            } else {
+                Toast.makeText(this@AddStoryActivity, getString(R.string.input_image_first), Toast.LENGTH_SHORT).show()
             }
-        } else {
-            Toast.makeText(this@AddStoryActivity, getString(R.string.input_image_first), Toast.LENGTH_SHORT).show()
         }
     }
 

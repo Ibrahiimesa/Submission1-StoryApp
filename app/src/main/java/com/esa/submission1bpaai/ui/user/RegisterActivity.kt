@@ -2,24 +2,19 @@ package com.esa.submission1bpaai.ui.user
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
-import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModelProvider
 import com.esa.submission1bpaai.R
-import com.esa.submission1bpaai.data.Resource
-import com.esa.submission1bpaai.data.preference.UserPreferences
+import com.esa.submission1bpaai.data.Result
 import com.esa.submission1bpaai.databinding.ActivityRegisterBinding
 import com.esa.submission1bpaai.util.ViewModelFactory
 
 class RegisterActivity : AppCompatActivity() {
-    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "token")
+
     private lateinit var binding: ActivityRegisterBinding
     private lateinit var userViewModel: UserViewModel
 
@@ -30,7 +25,6 @@ class RegisterActivity : AppCompatActivity() {
         supportActionBar?.hide()
 
         setupViewModel()
-        setupView()
         setupAction()
         setAnimation()
     }
@@ -44,7 +38,21 @@ class RegisterActivity : AppCompatActivity() {
                 val name = binding.etName.text.toString()
                 val email = binding.etEmail.text.toString()
                 val password = binding.etPass.text.toString()
-                userViewModel.register(name, email, password)
+                userViewModel.userRegister(name, email, password).observe(this) {
+                    when (it) {
+                        is Result.Success -> {
+                            showLoad(false)
+                            Toast.makeText(this, it.data.message, Toast.LENGTH_SHORT).show()
+                            startActivity(Intent(this, LoginActivity::class.java))
+                            finishAffinity()
+                        }
+                        is Result.Loading -> showLoad(true)
+                        is Result.Error -> {
+                            Toast.makeText(this, it.error, Toast.LENGTH_SHORT).show()
+                            showLoad(false)
+                        }
+                    }
+                }
             } else {
                 Toast.makeText(
                     this,
@@ -86,27 +94,9 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupView() {
-        userViewModel.userInfo.observe(this) {
-            when (it) {
-                is Resource.Success -> {
-                    showLoad(false)
-                    Toast.makeText(this, it.data, Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this, LoginActivity::class.java))
-                    finishAffinity()
-                }
-                is Resource.Loading -> showLoad(true)
-                is Resource.Error -> {
-                    Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show()
-                    showLoad(false)
-                }
-            }
-        }
-    }
-
     private fun setupViewModel() {
-        val pref = UserPreferences.getInstance(dataStore)
-        userViewModel = ViewModelProvider(this, ViewModelFactory(pref))[UserViewModel::class.java]
+        val factory: ViewModelFactory = ViewModelFactory.getInstance(this)
+        userViewModel = ViewModelProvider(this, factory)[UserViewModel::class.java]
     }
 
     private fun showLoad(isLoad: Boolean) {

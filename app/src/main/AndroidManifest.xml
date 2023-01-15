@@ -4,12 +4,16 @@
     package="com.esa.submission1bpaai">
 
     <uses-feature android:name="android.hardware.camera" />
-    <uses-permission android:name="android.permission.CAMERA" />
 
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="18" />
+
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -20,7 +24,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Submission1BPAAI"
+        android:requestLegacyExternalStorage="true"
         tools:targetApi="31">
+        <activity
+            android:name=".ui.maps.MapsActivity"
+            android:exported="false" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDD-kDWs9p_PT7X4N84bjVh8En5kF4ufHQ" />
+
         <activity
             android:name=".ui.story.AddStoryActivity"
             android:exported="false" />
@@ -41,10 +54,10 @@
             android:exported="false" />
         <activity
             android:name=".ui.user.LoginActivity"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".ui.story.MainActivity"
-            android:exported="false"/>
+            android:exported="true" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -53,7 +66,7 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"/>
+                android:resource="@xml/file_paths" />
         </provider>
 
         <meta-data

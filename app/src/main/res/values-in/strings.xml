@@ -25,4 +25,7 @@
     <string name="input_image_first">Masukkan Gambar!</string>
     <string name="didnt_get_permission">Tidak Medapatkan Izin</string>
     <string name="setting">Pengaturan</string>
+    <string name="retry">Coba Laagi</string>
+    <string name="maps">Maps Story</string>
+    <string name="story_from">Story Dari : </string>
 </resources>

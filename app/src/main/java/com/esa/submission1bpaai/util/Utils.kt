@@ -55,3 +55,5 @@ fun reduceFileImage(file: File): File {
 
     return file
 }
+
+const val durationSplash = 4000

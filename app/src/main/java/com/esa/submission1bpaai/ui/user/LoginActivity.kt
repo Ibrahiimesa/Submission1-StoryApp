@@ -2,25 +2,21 @@ package com.esa.submission1bpaai.ui.user
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
-import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModelProvider
 import com.esa.submission1bpaai.ui.story.MainActivity
 import com.esa.submission1bpaai.R
-import com.esa.submission1bpaai.data.Resource
-import com.esa.submission1bpaai.data.preference.UserPreferences
+import com.esa.submission1bpaai.data.Result
+import com.esa.submission1bpaai.data.model.User
 import com.esa.submission1bpaai.databinding.ActivityLoginBinding
 import com.esa.submission1bpaai.util.ViewModelFactory
 
 class LoginActivity : AppCompatActivity() {
-    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "token")
+
     private lateinit var binding : ActivityLoginBinding
     private lateinit var userViewModel: UserViewModel
 
@@ -31,7 +27,6 @@ class LoginActivity : AppCompatActivity() {
         supportActionBar?.hide()
 
         setupViewModel()
-        setupView()
         setupAction()
         setAnimation()
     }
@@ -41,7 +36,28 @@ class LoginActivity : AppCompatActivity() {
             if (valid()) {
                 val email = binding.etEmail.text.toString()
                 val password = binding.etPass.text.toString()
-                userViewModel.login(email, password)
+                userViewModel.userLogin(email, password).observe(this) {
+                    when (it) {
+                        is Result.Success -> {
+                            showLoad(false)
+                            val response = it.data
+                            saveUserData(
+                                User(
+                                    response.loginResult?.name.toString(),
+                                    response.loginResult?.token.toString(),
+                                    true
+                                )
+                            )
+                            startActivity(Intent(this, MainActivity::class.java))
+                            finishAffinity()
+                        }
+                        is Result.Loading -> showLoad(true)
+                        is Result.Error -> {
+                            Toast.makeText(this, it.error, Toast.LENGTH_SHORT).show()
+                            showLoad(false)
+                        }
+                    }
+                }
             } else {
                 Toast.makeText(
                     this,
@@ -83,27 +99,13 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupView() {
-
-        userViewModel.userInfo.observe(this) {
-            when (it) {
-                is Resource.Success -> {
-                    showLoad(false)
-                    startActivity(Intent(this, MainActivity::class.java))
-                    finishAffinity()
-                }
-                is Resource.Loading -> showLoad(true)
-                is Resource.Error -> {
-                    Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show()
-                    showLoad(false)
-                }
-            }
-        }
+    private fun saveUserData(user: User) {
+        userViewModel.saveUser(user)
     }
 
     private fun setupViewModel() {
-        val pref = UserPreferences.getInstance(dataStore)
-        userViewModel = ViewModelProvider(this, ViewModelFactory(pref))[UserViewModel::class.java]
+        val factory: ViewModelFactory = ViewModelFactory.getInstance(this)
+        userViewModel = ViewModelProvider(this, factory)[UserViewModel::class.java]
     }
 
     private fun showLoad(isLoad: Boolean) {
@@ -117,5 +119,4 @@ class LoginActivity : AppCompatActivity() {
 
     private fun valid() =
         binding.etEmail.error == null && binding.etPass.error == null && !binding.etEmail.text.isNullOrEmpty() && !binding.etPass.text.isNullOrEmpty()
-
 }

@@ -1,29 +1,21 @@
 package com.esa.submission1bpaai.ui.story
 
-import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
-import android.widget.Toast
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModelProvider
-import com.esa.submission1bpaai.data.Resource
-import com.esa.submission1bpaai.data.preference.UserPreferences
 import com.esa.submission1bpaai.databinding.ActivityMainBinding
+import com.esa.submission1bpaai.ui.adapter.LoadingStateAdapter
 import com.esa.submission1bpaai.ui.user.UserViewModel
 import com.esa.submission1bpaai.ui.adapter.StoryAdapter
+import com.esa.submission1bpaai.ui.maps.MapsActivity
 import com.esa.submission1bpaai.ui.user.LoginActivity
 import com.esa.submission1bpaai.util.ViewModelFactory
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "token")
+
     private lateinit var binding: ActivityMainBinding
     private lateinit var storyAdapter: StoryAdapter
     private lateinit var mainViewModel: MainViewModel
@@ -40,45 +32,34 @@ class MainActivity : AppCompatActivity() {
         onClick()
     }
 
-    override fun onBackPressed() {
-        super.onBackPressed()
-        moveTaskToBack(true)
-    }
-
     private fun onClick() {
-        binding.logOut.setOnClickListener {
+        val menu = binding.fabMenu
+        binding.fabLogOut.setOnClickListener {
             userViewModel.logout()
             startActivity(Intent(this, LoginActivity::class.java))
             finishAffinity()
         }
-        binding.addStory.setOnClickListener{
+
+        binding.fabAddStory.setOnClickListener{
             startActivity(Intent(this, AddStoryActivity::class.java))
+            menu.close(false)
         }
-        binding.setting.setOnClickListener {
+        binding.fabSetting.setOnClickListener {
             startActivity(Intent(Settings.ACTION_LOCALE_SETTINGS))
+            menu.close(false)
+        }
+        binding.fabMaps.setOnClickListener {
+            startActivity(Intent(this, MapsActivity::class.java))
+            menu.close(false)
         }
     }
 
     private fun setupView() {
         storyAdapter = StoryAdapter()
 
-        userViewModel.getUserToken().observe(this){ token ->
-            if (token.isNotEmpty()){
-                mainViewModel.stories.observe(this) {
-                    when (it) {
-                        is Resource.Success -> {
-                            it.data?.let { stories -> storyAdapter.setData(stories) }
-                            showLoad(false)
-                        }
-                        is Resource.Loading -> showLoad(true)
-                        is Resource.Error -> {
-                            Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-                CoroutineScope(Dispatchers.IO).launch {
-                    mainViewModel.getStories()
-                }
+        mainViewModel.getUser().observe(this@MainActivity){ user ->
+            if (user.isLogin){
+                setStory()
             }
             else {
                 startActivity(Intent(this, LoginActivity::class.java))
@@ -88,17 +69,25 @@ class MainActivity : AppCompatActivity() {
 
         with(binding.rvStory) {
             setHasFixedSize(true)
-            adapter = storyAdapter
+            adapter = storyAdapter.withLoadStateFooter(
+                footer = LoadingStateAdapter{
+                    storyAdapter.retry()
+                })
+        }
+    }
+
+    private fun setStory() {
+        mainViewModel.getStory().observe(this@MainActivity) {
+            storyAdapter.submitData(lifecycle, it)
+            showLoad(false)
         }
     }
 
     private fun setupViewModel() {
-        val pref = UserPreferences.getInstance(dataStore)
-        val viewModelFactory = ViewModelFactory(pref)
+        val factory: ViewModelFactory = ViewModelFactory.getInstance(this)
 
-        mainViewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
-        userViewModel= ViewModelProvider(this, viewModelFactory)[UserViewModel::class.java]
-
+        mainViewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
+        userViewModel= ViewModelProvider(this, factory)[UserViewModel::class.java]
     }
 
     private fun showLoad(isLoad: Boolean) {

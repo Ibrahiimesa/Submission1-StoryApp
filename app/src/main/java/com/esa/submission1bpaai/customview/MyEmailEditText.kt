@@ -2,8 +2,6 @@ package com.esa.submission1bpaai.customview
 
 import android.content.Context
 import android.graphics.drawable.Drawable
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.AttributeSet
 import android.util.Patterns
 import androidx.appcompat.widget.AppCompatEditText
